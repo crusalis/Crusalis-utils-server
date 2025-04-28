@@ -42,6 +42,7 @@ class CrusalisUtilsServer : JavaPlugin() {
         saveDefaultConfig()
 
         glowingEntitiesInstance = GlowingEntities(this)
+        glowTime = config.getInt("player_glow_duration")
     }
 
     private fun enableListeners(){
@@ -61,5 +62,7 @@ class CrusalisUtilsServer : JavaPlugin() {
         var nodesInstance : Nodes? = null
 
         var glowingEntitiesInstance: GlowingEntities? = null;
+
+        var glowTime : Int = 0
     }
 }

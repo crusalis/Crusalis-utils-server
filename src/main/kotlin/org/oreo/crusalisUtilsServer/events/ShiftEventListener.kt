@@ -58,7 +58,7 @@ class ShiftEventListener(val plugin: Plugin) : Listener {
                 CrusalisUtilsServer.glowingEntitiesInstance!!.setGlowing(target, player, teamColour)
 
                 // Schedule a delayed task to remove the glowing effect after x seconds
-                val delayInTicks = 20L * plugin.config.getInt("player_glow_duration") // Replace 5 with the number of seconds you want
+                val delayInTicks = 20L * CrusalisUtilsServer.glowTime // Replace 5 with the number of seconds you want
                 Bukkit.getScheduler().runTaskLater(plugin, Runnable {
                     CrusalisUtilsServer.glowingEntitiesInstance!!.unsetGlowing(target, player)
                 }, delayInTicks)
