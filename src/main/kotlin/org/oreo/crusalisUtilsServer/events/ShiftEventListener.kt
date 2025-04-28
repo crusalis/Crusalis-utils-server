@@ -48,7 +48,7 @@ class ShiftEventListener(val plugin: Plugin) : Listener {
 
                     ChatColor.DARK_GREEN
                 } else if (playerNation.allies.contains(targetNation)) {
-                    ChatColor.DARK_GREEN
+                    ChatColor.DARK_AQUA
                 } else if (playerNation.enemies.contains(targetNation)) {
                     ChatColor.RED
                 } else {
