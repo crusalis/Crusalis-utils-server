@@ -1,1 +1,2 @@
-player_glow_duration: 5 #How long a player will glow (seconds)
+glow_time_players: 5 #How long the players will glow (seconds)
+glow_time_blocks: 10 #How long the blocks will glow (seconds)

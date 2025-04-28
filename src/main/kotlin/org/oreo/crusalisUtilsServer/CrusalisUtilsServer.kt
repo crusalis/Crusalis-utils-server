@@ -1,5 +1,6 @@
 package org.oreo.crusalisUtilsServer
 
+import fr.skytasul.glowingentities.GlowingBlocks
 import fr.skytasul.glowingentities.GlowingEntities
 import org.bukkit.Bukkit
 import org.bukkit.plugin.ServicePriority
@@ -42,7 +43,9 @@ class CrusalisUtilsServer : JavaPlugin() {
         saveDefaultConfig()
 
         glowingEntitiesInstance = GlowingEntities(this)
-        glowTime = config.getInt("player_glow_duration")
+        glowingBlocksInstance = GlowingBlocks(this)
+        glowTimePlayers = config.getInt("glow_time_players")
+        glowTimeBlocks = config.getInt("glow_time_blocks")
     }
 
     private fun enableListeners(){
@@ -61,8 +64,10 @@ class CrusalisUtilsServer : JavaPlugin() {
     companion object {
         var nodesInstance : Nodes? = null
 
-        var glowingEntitiesInstance: GlowingEntities? = null;
+        var glowingEntitiesInstance: GlowingEntities? = null
+        var glowingBlocksInstance: GlowingBlocks? = null
 
-        var glowTime : Int = 0
+        var glowTimePlayers : Int = 0
+        var glowTimeBlocks : Int = 0
     }
 }

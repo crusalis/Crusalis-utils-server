@@ -2,14 +2,14 @@ package org.oreo.crusalisUtilsServer.events
 
 
 import org.bukkit.*
+import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.Action
 import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.scheduler.BukkitRunnable
 import org.oreo.crusalisUtilsServer.CrusalisUtilsServer
 import org.oreo.crusalisUtilsServer.item.ItemManager
 import org.oreo.crusalisUtilsServer.utils.GeneralUtils
-import org.oreo.crusalisUtilsServer.utils.RayTraceUtil
 
 
 class ItemClickingListener(private val plugin: CrusalisUtilsServer) : Listener {
@@ -28,59 +28,39 @@ class ItemClickingListener(private val plugin: CrusalisUtilsServer) : Listener {
         e.player.setCooldown(Material.STICK,10 * 20) //10 sec cooldown
         e.player.playSound(e.player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 0.5F, 2.0F)
         val serverRender = Bukkit.getServer().viewDistance * 16.0
-        val raytraceLocation = RayTraceUtil.getLastNonSolidLocation(e.player,serverRender,0.3) ?: return
+        val raytraceBlock = e.player.rayTraceBlocks(serverRender)?.hitBlock ?: return
 
-        val nation = CrusalisUtilsServer.nodesInstance!!.getResident(e.player)?.nation
+        val nearbyPlayers: List<Player> = GeneralUtils.getNearbyPlayers(e.player) + e.player
 
-        var timer = 8 * 20 //8 seconds
-        var firstLoop = true
-        object : BukkitRunnable() {
-            override fun run() {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, Runnable {
 
-                val dustOptions = Particle.DustOptions(Color.RED, 5.0f)
-
-                val offsetRange = 0.3
-                val offsetX = (Math.random() - 0.5) * offsetRange
-                val offsetY = (Math.random() - 0.5) * offsetRange
-                val offsetZ = (Math.random() - 0.5) * offsetRange
-
-                e.player.spawnParticle(
-                    Particle.DUST,
-                    raytraceLocation,
-                    2,
-                    offsetX, offsetY, offsetZ,
-                    0.0,
-                    dustOptions,
-                    true
-                )
-
-                for (player in GeneralUtils.getNearbyPlayers(e.player)) {
-
-                    if ( CrusalisUtilsServer.nodesInstance!!.getResident(player)?.nation !== nation ) continue
-
-                    if (firstLoop){
-                        player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 0.5F, 2.0F)
-                    }
-
-                    player.spawnParticle(
-                        Particle.DUST,
-                        raytraceLocation,
-                        2,
-                        offsetX, offsetY, offsetZ,
-                        0.0,
-                        dustOptions,
-                        true
-                    )
-                }
-
-                firstLoop = false
-
-                if (timer <= 0) {
-                    cancel() // Cancels this task.
-                }
-
-                timer--
+            val pingColour = if (e.player.isSneaking){
+                ChatColor.RED
+            } else if (e.action == Action.RIGHT_CLICK_AIR || e.action == Action.RIGHT_CLICK_BLOCK) {
+                ChatColor.YELLOW
+            } else {
+                ChatColor.WHITE
             }
-        }.runTaskTimer(plugin, 0L, 1L)
+            
+            val nation = CrusalisUtilsServer.nodesInstance!!.getResident(e.player)?.nation
+
+            for (target in nearbyPlayers) {
+
+                if ( CrusalisUtilsServer.nodesInstance!!.getResident(target)?.nation !== nation ) continue
+
+                
+                Bukkit.getScheduler().runTask(plugin, Runnable {
+                    target.playSound(target.location, Sound.BLOCK_NOTE_BLOCK_PLING, 0.5F, 2.0F)
+                })
+
+
+                CrusalisUtilsServer.glowingBlocksInstance!!.setGlowing(raytraceBlock, target,pingColour)
+
+                val delayInTicks = 20L * CrusalisUtilsServer.glowTimeBlocks // Replace 5 with the number of seconds you want
+                Bukkit.getScheduler().runTaskLater(plugin, Runnable {
+                    CrusalisUtilsServer.glowingBlocksInstance!!.unsetGlowing(raytraceBlock, target)
+                }, delayInTicks)
+            }
+        })
     }
 }
