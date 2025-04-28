@@ -1,108 +1,70 @@
 package org.oreo.crusalisUtilsServer.events
 
-import com.comphenix.protocol.PacketType
-import com.comphenix.protocol.ProtocolLibrary
-import com.comphenix.protocol.events.PacketContainer
-import com.comphenix.protocol.wrappers.WrappedDataWatcher
+
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
+import org.bukkit.FluidCollisionMode
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerToggleSneakEvent
-import org.bukkit.potion.PotionEffect
-import org.bukkit.potion.PotionEffectType
-import org.bukkit.scoreboard.Team
-import java.lang.reflect.InvocationTargetException
-import kotlin.experimental.or
+import org.bukkit.plugin.Plugin
+import org.oreo.crusalisUtilsServer.CrusalisUtilsServer
 
 
-class ShiftEventListener : Listener {
-    
+class ShiftEventListener(val plugin: Plugin) : Listener {
+
     @EventHandler
     fun onPlayerShift(e: PlayerToggleSneakEvent) {
+
 
         if (!e.isSneaking) return
 
         val player = e.player
         val target = raycastForPlayer(player)
 
-        player.sendMessage("You are looking at " + target?.name)
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, Runnable {
 
-        if (target == null) return
+            player.sendMessage("You are looking at ${target?.name}")
 
-        makePlayerGlowTo(target, player, ChatColor.GOLD)
+            if (target == null) return@Runnable
+
+            val playerNation = CrusalisUtilsServer.nodesInstance!!.getResident(player)?.nation ?: return@Runnable
+            val residentNation = CrusalisUtilsServer.nodesInstance!!.getResident(target)?.nation ?: return@Runnable
+
+            val teamColour : ChatColor = if (playerNation === residentNation){
+                ChatColor.GREEN
+            } else if (playerNation.allies.contains(residentNation)){
+                ChatColor.AQUA
+            } else if (playerNation.enemies.contains(residentNation)){
+                ChatColor.RED
+            } else {
+                ChatColor.GOLD
+            }
+
+            CrusalisUtilsServer.glowingEntitiesInstance!!.setGlowing(target,player,teamColour)
+        })
+
     }
 
     private fun raycastForPlayer(player: Player): Player? {
-        val maxDistance = player.server.simulationDistance * 16.0 // Convert chunks to blocks
-        val direction = player.location.direction.normalize()
-        val startLocation = player.eyeLocation
 
-        val currentLocation = startLocation.clone()
-        val increment = 0.5 // Check every half block
+        val world = player.world
+        val direction = player.eyeLocation.direction.normalize()
 
-        while (currentLocation.distance(startLocation) <= maxDistance) {
-            val playerAtLocation = getPlayerAtLocation(currentLocation, player)
-            if (playerAtLocation != null) {
-                return playerAtLocation
-            }
-            currentLocation.add(direction.clone().multiply(increment))
-        }
+        // Reduce max distance and increase step size
+        val maxDistance = player.server.simulationDistance * 16.0
 
-        return null
+        // Turns out paper has its own raytrace method so im using that
+        val result = world.rayTrace(
+            player.eyeLocation,
+            direction,
+            maxDistance,
+            FluidCollisionMode.NEVER,
+            true,
+            0.5
+        ) { entity -> entity is Player && entity != player && !entity.isDead }
+
+        return result?.hitEntity as? Player
     }
-
-private fun getPlayerAtLocation(location: org.bukkit.Location, excludePlayer: Player): Player? {
-    val nearbyEntities = location.world.getNearbyEntities(location, 1.0, 1.0, 1.0) // Query a bounding box of 1 block
-    return nearbyEntities
-        .filterIsInstance<Player>() // Filter only players
-        .firstOrNull { it != excludePlayer && !it.isDead }
-}
-
-
-    fun makePlayerGlowTo(target: Player, viewer: Player, color: ChatColor) {
-        // Add the target to a scoreboard team
-        val scoreboard = Bukkit.getScoreboardManager().getMainScoreboard()
-        var team = scoreboard.getTeam("glow_" + viewer.getName())
-        if (team == null) {
-            team = scoreboard.registerNewTeam("glow_" + viewer.getName())
-        }
-
-        team.setColor(color)
-        team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.NEVER)
-        team.addEntry(target.getName())
-
-        // Make the viewer see the glowing
-        target.addPotionEffect(PotionEffect(PotionEffectType.GLOWING, Int.Companion.MAX_VALUE, 1, false, false))
-
-        // Send packets so only the viewer sees the glow
-        sendGlowPacket(target, viewer, true)
-    }
-
-   fun sendGlowPacket(glowingPlayer: Player, viewer: Player?, glowing: Boolean) {
-       val packet: PacketContainer =
-           ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ENTITY_METADATA)
-       packet.getIntegers().write(0, glowingPlayer.entityId)
-
-       val watcher = WrappedDataWatcher()
-       val byteSerializer = WrappedDataWatcher.Registry.get(Byte::class.javaPrimitiveType)
-
-       var flags: Byte = 0
-       if (glowing) {
-           flags = flags or 0x40 // Bit 6 enables glowing
-       }
-
-       watcher.setEntity(glowingPlayer)
-       watcher.setObject(0, byteSerializer, flags)
-
-       packet.getWatchableCollectionModifier().write(0, watcher.watchableObjects)
-
-       try {
-           ProtocolLibrary.getProtocolManager().sendServerPacket(viewer, packet)
-       } catch (e: InvocationTargetException) {
-           e.printStackTrace()
-       }
-   }
-
 }

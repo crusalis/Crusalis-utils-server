@@ -1,5 +1,6 @@
 package org.oreo.crusalisUtilsServer
 
+import fr.skytasul.glowingentities.GlowingEntities
 import org.bukkit.Bukkit
 import org.bukkit.plugin.ServicePriority
 import org.bukkit.plugin.java.JavaPlugin
@@ -8,7 +9,6 @@ import org.oreo.crusalisUtilsServer.commands.CrusalisUtilsCommands
 import org.oreo.crusalisUtilsServer.commands.IncomeSummary
 import org.oreo.crusalisUtilsServer.events.ItemClickingListener
 import org.oreo.crusalisUtilsServer.events.ItemHoldingListener
-import org.oreo.crusalisUtilsServer.events.PlayerJoinListener
 import org.oreo.crusalisUtilsServer.events.ShiftEventListener
 import org.oreo.crusalisUtilsServer.item.ItemManager
 import phonon.nodes.Nodes
@@ -40,13 +40,14 @@ class CrusalisUtilsServer : JavaPlugin() {
         enableListeners()
 
         saveDefaultConfig()
+
+        glowingEntitiesInstance = GlowingEntities(this)
     }
 
     private fun enableListeners(){
         server.pluginManager.registerEvents(ItemHoldingListener(this), this)
         server.pluginManager.registerEvents(ItemClickingListener(this), this)
-        server.pluginManager.registerEvents(ShiftEventListener(), this)
-        server.pluginManager.registerEvents(PlayerJoinListener(this), this)
+        server.pluginManager.registerEvents(ShiftEventListener(this), this)
     }
 
 
@@ -59,6 +60,6 @@ class CrusalisUtilsServer : JavaPlugin() {
     companion object {
         var nodesInstance : Nodes? = null
 
-        const val DISABLE_STRING = "[EPIC DISABLER???]disableFeature";
+        var glowingEntitiesInstance: GlowingEntities? = null;
     }
 }
