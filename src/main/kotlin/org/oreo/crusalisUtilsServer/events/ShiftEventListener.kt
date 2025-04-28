@@ -3,13 +3,13 @@ package org.oreo.crusalisUtilsServer.events
 
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
-import org.bukkit.FluidCollisionMode
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.plugin.Plugin
 import org.oreo.crusalisUtilsServer.CrusalisUtilsServer
+import org.oreo.crusalisUtilsServer.utils.GeneralUtils
 
 
 class ShiftEventListener(val plugin: Plugin) : Listener {
@@ -17,54 +17,73 @@ class ShiftEventListener(val plugin: Plugin) : Listener {
     @EventHandler
     fun onPlayerShift(e: PlayerToggleSneakEvent) {
 
-
         if (!e.isSneaking) return
 
         val player = e.player
-        val target = raycastForPlayer(player)
+        val targets : ArrayList<Player> = arrayListOf()
+
+        for ( nearbyPlayer in GeneralUtils.getNearbyPlayers(player) ) {
+
+            if (!player.hasLineOfSight(nearbyPlayer)) continue
+
+            targets.add(nearbyPlayer)
+        }
+
+        if (targets.isEmpty()) return
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, Runnable {
+            for (target in targets) {
 
-            player.sendMessage("You are looking at ${target?.name}")
+                val playerResident = CrusalisUtilsServer.nodesInstance!!.getResident(player) ?: return@Runnable
+                val targetResident = CrusalisUtilsServer.nodesInstance!!.getResident(target) ?: return@Runnable
 
-            if (target == null) return@Runnable
+                val playerNation = playerResident.nation ?: return@Runnable
+                val targetNation = targetResident.nation ?: return@Runnable
 
-            val playerNation = CrusalisUtilsServer.nodesInstance!!.getResident(player)?.nation ?: return@Runnable
-            val residentNation = CrusalisUtilsServer.nodesInstance!!.getResident(target)?.nation ?: return@Runnable
+                val teamColour: ChatColor = if (playerNation === targetNation) {
 
-            val teamColour : ChatColor = if (playerNation === residentNation){
-                ChatColor.GREEN
-            } else if (playerNation.allies.contains(residentNation)){
-                ChatColor.AQUA
-            } else if (playerNation.enemies.contains(residentNation)){
-                ChatColor.RED
-            } else {
-                ChatColor.GOLD
+                    if (playerResident.town === targetResident.town) {
+                        ChatColor.GREEN
+                    }
+
+                    ChatColor.DARK_GREEN
+                } else if (playerNation.allies.contains(targetNation)) {
+                    ChatColor.DARK_GREEN
+                } else if (playerNation.enemies.contains(targetNation)) {
+                    ChatColor.RED
+                } else {
+                    ChatColor.GOLD
+                }
+
+                CrusalisUtilsServer.glowingEntitiesInstance!!.setGlowing(target, player, teamColour)
+
+                // Schedule a delayed task to remove the glowing effect after x seconds
+                val delayInTicks = 20L * plugin.config.getInt("player_glow_duration") // Replace 5 with the number of seconds you want
+                Bukkit.getScheduler().runTaskLater(plugin, Runnable {
+                    CrusalisUtilsServer.glowingEntitiesInstance!!.unsetGlowing(target, player)
+                }, delayInTicks)
             }
-
-            CrusalisUtilsServer.glowingEntitiesInstance!!.setGlowing(target,player,teamColour)
         })
-
     }
 
-    private fun raycastForPlayer(player: Player): Player? {
-
-        val world = player.world
-        val direction = player.eyeLocation.direction.normalize()
-
-        // Reduce max distance and increase step size
-        val maxDistance = player.server.simulationDistance * 16.0
-
-        // Turns out paper has its own raytrace method so im using that
-        val result = world.rayTrace(
-            player.eyeLocation,
-            direction,
-            maxDistance,
-            FluidCollisionMode.NEVER,
-            true,
-            0.5
-        ) { entity -> entity is Player && entity != player && !entity.isDead }
-
-        return result?.hitEntity as? Player
-    }
+//    private fun raycastForPlayer(player: Player): Player? {
+//
+//        val world = player.world
+//        val direction = player.eyeLocation.direction.normalize()
+//
+//        // Reduce max distance and increase step size
+//        val maxDistance = player.server.simulationDistance * 16.0
+//
+//        // Turns out paper has its own raytrace method so im using that
+//        val result = world.rayTrace(
+//            player.eyeLocation,
+//            direction,
+//            maxDistance,
+//            FluidCollisionMode.NEVER,
+//            true,
+//            0.5
+//        ) { entity -> entity is Player && entity != player && !entity.isDead }
+//
+//        return result?.hitEntity as? Player
+//    }
 }
