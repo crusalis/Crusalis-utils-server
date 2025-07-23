@@ -15,7 +15,7 @@ import org.oreo.crusalisUtilsServer.utils.GeneralUtils
 class ItemClickingListener(private val plugin: CrusalisUtilsServer) : Listener {
 
     @EventHandler
-    fun itemHeld(e: PlayerInteractEvent) {
+    fun itemHeld(e: PlayerInteractEvent) { //TODO add "modes" to the commstick for town nation and allies
 
         if (!ItemManager.isHoldingCustomItem(e.player,ItemManager.teleComunicationSctick)) {
             return
@@ -26,7 +26,6 @@ class ItemClickingListener(private val plugin: CrusalisUtilsServer) : Listener {
         if (e.player.hasCooldown(Material.STICK)) return
 
         e.player.setCooldown(Material.STICK,10 * 20) //10 sec cooldown
-        e.player.playSound(e.player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 0.5F, 2.0F)
         val serverRender = Bukkit.getServer().viewDistance * 16.0
         val raytraceBlock = e.player.rayTraceBlocks(serverRender)?.hitBlock ?: return
 

@@ -56,7 +56,7 @@ class CrusalisUtilsCommands : CommandExecutor, TabCompleter {
 
 
     private fun helpCommand(sender: CommandSender, args: Array<String>) {
-
+        //TODO kinda pointless we'll see
     }
 
     override fun onTabComplete(

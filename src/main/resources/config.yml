@@ -1,2 +1,2 @@
-glow_time_players: 5 #How long the players will glow (seconds)
-glow_time_blocks: 10 #How long the blocks will glow (seconds)
+glow_time_players: 5 # Player glow time after shifting (seconds)
+glow_time_blocks: 30 # block glow time on location ping (seconds)

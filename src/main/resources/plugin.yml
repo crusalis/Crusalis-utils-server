@@ -1,7 +1,7 @@
 name: crusalisUtilsServer
 version: '1.0'
 main: org.oreo.crusalisUtilsServer.CrusalisUtilsServer
-api-version: '1.21.1'
+api-version: '1.21.7'
 
 libraries:
   - ${libraries[0]}

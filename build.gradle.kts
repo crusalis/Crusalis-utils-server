@@ -21,8 +21,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-    compileOnly("fr.skytasul:glowingentities:1.4.3") // Changed to compileOnly
+    compileOnly("io.papermc.paper:paper-api:1.21.7-R0.1-SNAPSHOT")
+    compileOnly("fr.skytasul:glowingentities:1.4.3")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     // If nodes.jar is a local dependency not available in any repo
